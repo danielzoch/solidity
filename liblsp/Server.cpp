@@ -41,7 +41,7 @@ Server::Server(Transport& _client, std::function<void(std::string_view)> _logger
 		{"cancelRequest", bind(&Server::handle_cancelRequest, this, _1, _2)},
 		{"initialize", bind(&Server::handle_initializeRequest, this, _1, _2)},
 		{"initialized", [this](auto, auto) { initialized(); }},
-		{"shutdown", bind(&Server::handle_shutdown, this, _1, _2)},
+		{"shutdown", [this](auto, auto) { m_shutdownRequested = true; }},
 		{"textDocument/didOpen", bind(&Server::handle_textDocument_didOpen, this, _1, _2)},
 		{"textDocument/didChange", bind(&Server::handle_textDocument_didChange, this, _1, _2)},
 		{"textDocument/didClose", bind(&Server::handle_textDocument_didClose, this, _1, _2)},
@@ -201,12 +201,6 @@ void Server::handle_workspace_didChangeConfiguration(MessageId, Json::Value cons
 		if (!settings.empty())
 			changeConfiguration(settings);
 	}
-}
-
-void Server::handle_shutdown(MessageId /*_id*/, Json::Value const& /*_args*/)
-{
-	log("Shutdown requested");
-	m_shutdownRequested = true;
 }
 
 void Server::handle_exit(MessageId _id, Json::Value const& /*_args*/)

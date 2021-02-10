@@ -88,7 +88,7 @@ bool ReferenceCollector::visit(frontend::MemberAccess const& _memberAccess)
 {
 	// TODO: MemberAccess.annotation.referencedDeclaration is always NULL, why?
 	// It should be EnumValue for an enum value.
-	fprintf(stderr, "ReferenceCollector.MemberAccess(%s): %s\n",
+	fprintf(stderr, "ReferenceCollector.MemberAccess(%s): %s\n", // XXX referencedDeclaration==NULL
 			_memberAccess.annotation().referencedDeclaration
 				? _memberAccess.annotation().referencedDeclaration->name().c_str()
 				: "null",

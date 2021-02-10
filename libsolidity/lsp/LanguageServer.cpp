@@ -478,7 +478,7 @@ std::vector<::lsp::Location> LanguageServer::gotoDefinition(::lsp::DocumentPosit
 		auto const fpm = m_fileReader->fullPathMapping().find(importDirective->path());
 		if (fpm == m_fileReader->fullPathMapping().end())
 		{
-			fprintf(stderr, "gotoDefinition: (importDirective) full path mapping not found\n");
+			trace("gotoDefinition: (importDirective) full path mapping not found\n");
 			return {}; // definition not found
 		}
 
@@ -486,18 +486,21 @@ std::vector<::lsp::Location> LanguageServer::gotoDefinition(::lsp::DocumentPosit
 		output.uri = "file://" + fpm->second;
 		return {output};
 	}
-	else if (auto const n = dynamic_cast<frontend::MemberAccess const*>(sourceNode); n)
+	else if (auto const n = dynamic_cast<frontend::MemberAccess const*>(sourceNode))
 	{
 		// For scope members, jump to the naming symbol of the referencing declaration of this member.
 		auto const declaration = n->annotation().referencedDeclaration;
 
 		auto const location = declarationPosition(declaration);
 		if (!location.has_value())
+		{
+			trace("gotoDefinition: declaration not found.");
 			return {}; // definition not found
+		}
 
 		return {location.value()};
 	}
-	else if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode); sourceIdentifier != nullptr)
+	else if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode))
 	{
 		// For identifiers, jump to the naming symbol of the definition of this identifier.
 		vector<::lsp::Location> output;
@@ -513,7 +516,7 @@ std::vector<::lsp::Location> LanguageServer::gotoDefinition(::lsp::DocumentPosit
 	}
 	else
 	{
-		trace("Symbol is not an identifier. "s + typeid(*sourceIdentifier).name());
+		trace("gotoDefinition: Symbol is not an identifier. "s + typeid(*sourceIdentifier).name());
 		return {};
 	}
 }
@@ -607,25 +610,27 @@ vector<::lsp::Location> LanguageServer::references(::lsp::DocumentPosition _docu
 	}
 
 	auto output = vector<::lsp::Location>{};
-	if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode); sourceIdentifier != nullptr)
+	if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode))
 	{
 		auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
 		frontend::SourceUnit const& sourceUnit = m_compilerStack->ast(sourceName);
 
-		if (auto decl = sourceIdentifier->annotation().referencedDeclaration; decl)
+		if (auto decl = sourceIdentifier->annotation().referencedDeclaration)
 			findAllReferences(decl, sourceUnit, _documentPosition.uri, output);
+		else
+			trace("references: referencedDeclaration == NULL");
 
 		for (auto const decl: sourceIdentifier->annotation().candidateDeclarations)
 			findAllReferences(decl, sourceUnit, _documentPosition.uri, output);
 	}
-	else if (auto const varDecl = dynamic_cast<VariableDeclaration const*>(sourceNode); varDecl != nullptr)
+	else if (auto const varDecl = dynamic_cast<VariableDeclaration const*>(sourceNode))
 	{
 		fprintf(stderr, "AST node is vardecl\n");
 		auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
 		frontend::SourceUnit const& sourceUnit = m_compilerStack->ast(sourceName);
 		findAllReferences(varDecl, sourceUnit, _documentPosition.uri, output);
 	}
-	else if (auto const memberAccess = dynamic_cast<MemberAccess const*>(sourceNode); memberAccess != nullptr)
+	else if (auto const memberAccess = dynamic_cast<MemberAccess const*>(sourceNode))
 	{
 		auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
 		frontend::SourceUnit const& sourceUnit = m_compilerStack->ast(sourceName);
@@ -633,7 +638,7 @@ vector<::lsp::Location> LanguageServer::references(::lsp::DocumentPosition _docu
 	}
 	else
 	{
-		fprintf(stderr, "not an identifier\n");
+		fprintf(stderr, "references: not an identifier\n");
 	}
 	return output;
 }
@@ -686,6 +691,8 @@ vector<::lsp::DocumentHighlight> LanguageServer::semanticHighlight(::lsp::Docume
 
 		if (sourceIdentifier->annotation().referencedDeclaration)
 			output += findAllReferences(sourceIdentifier->annotation().referencedDeclaration, sourceIdentifier->name(), sourceUnit);
+		else
+			trace("semanticHighlight: referencedDeclaration == NULL");
 
 		for (Declaration const* declaration: sourceIdentifier->annotation().candidateDeclarations)
 			output += findAllReferences(declaration, sourceIdentifier->name(), sourceUnit);
@@ -717,6 +724,8 @@ vector<::lsp::DocumentHighlight> LanguageServer::semanticHighlight(::lsp::Docume
 			if (auto const enumType = dynamic_cast<EnumType const*>(ttype->actualType()))
 			{
 				auto const& enumMembers = enumType->enumDefinition().members();
+				if (enumMembers.empty())
+					trace("enumType members are empty");
 
 				// find the definition
 				for (auto const& enumMember: enumMembers)
@@ -725,9 +734,13 @@ vector<::lsp::DocumentHighlight> LanguageServer::semanticHighlight(::lsp::Docume
 
 				// find uses of the enum value
 			}
+			else
+				trace("semanticHighlight: not an EnumType");
 
 			fprintf(stderr, "semanticHighlight: memberAccess.ttype(%s): %s\n", typeid(*ttype).name(), ttype->toString(false).c_str());
 		}
+		else
+			trace("semanticHighlight: member type is NULL");
 		// if (auto const tt = dynamic_cast<TypeType const*>(type))
 		// {
 		// 	auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
