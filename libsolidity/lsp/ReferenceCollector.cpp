@@ -20,6 +20,7 @@
 #include <libsolidity/ast/AST.h>
 #include <libsolidity/lsp/LanguageServer.h>
 
+using std::move;
 using std::vector;
 using std::string;
 
@@ -118,7 +119,7 @@ void ReferenceCollector::addReference(solidity::langutil::SourceLocation const& 
 {
 	auto const [startLine, startColumn] = _location.source->translatePositionToLineColumn(_location.start);
 	auto const [endLine, endColumn] = _location.source->translatePositionToLineColumn(_location.end);
-	auto const locationRange = ::lsp::Range{
+	auto locationRange = ::lsp::Range{
 		{startLine, startColumn},
 		{endLine, endColumn}
 	};
@@ -129,11 +130,7 @@ void ReferenceCollector::addReference(solidity::langutil::SourceLocation const& 
 		endLine, endColumn
 	);
 
-	auto highlight = ::lsp::DocumentHighlight{};
-	highlight.range = locationRange;
-	highlight.kind = ::lsp::DocumentHighlightKind::Text; // TODO: are you being read or written to?
-
-	m_result.emplace_back(highlight);
+	m_result.emplace_back(::lsp::DocumentHighlight{move(locationRange), ::lsp::DocumentHighlightKind::Text});
 }
 
 }

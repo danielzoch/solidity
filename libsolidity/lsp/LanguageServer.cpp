@@ -99,7 +99,7 @@ public:
 
 	bool visit(Identifier const& _identifier) override
 	{
-		if (auto const declaration = _identifier.annotation().referencedDeclaration; declaration)
+		if (auto const declaration = _identifier.annotation().referencedDeclaration)
 			if (declaration->type() == &m_type)
 				addReference(_identifier.location(), "ref: " + _identifier.name());
 
@@ -147,7 +147,7 @@ public:
 
 	bool visitNode(ASTNode const& _node) override
 	{
-		if (auto const declaration = dynamic_cast<Declaration const*>(&_node); declaration != nullptr)
+		if (auto const declaration = dynamic_cast<Declaration const*>(&_node))
 			if (declaration->type() == &m_type)
 				if (declaration->nameLocation().source)
 					addReference(declaration->nameLocation(), "(visitNode)");
@@ -677,12 +677,12 @@ vector<::lsp::DocumentHighlight> LanguageServer::semanticHighlight(::lsp::Docume
 	auto output = vector<::lsp::DocumentHighlight>{};
 
 	// XXX we could make this if/else chain a SimpleASTVisitor
-	if (auto const importDirective = dynamic_cast<ImportDirective const*>(sourceNode); importDirective != nullptr)
+	if (auto const importDirective = dynamic_cast<ImportDirective const*>(sourceNode))
 	{
 		// TODO
 		fprintf(stderr, "semanticHighlight: ImportDirective!\n");
 	}
-	else if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode); sourceIdentifier != nullptr)
+	else if (auto const sourceIdentifier = dynamic_cast<Identifier const*>(sourceNode))
 	{
 		auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
 		frontend::SourceUnit const& sourceUnit = m_compilerStack->ast(sourceName);
@@ -702,14 +702,14 @@ vector<::lsp::DocumentHighlight> LanguageServer::semanticHighlight(::lsp::Docume
 
 		return output;
 	}
-	else if (auto const varDecl = dynamic_cast<VariableDeclaration const*>(sourceNode); varDecl != nullptr)
+	else if (auto const varDecl = dynamic_cast<VariableDeclaration const*>(sourceNode))
 	{
 		fprintf(stderr, "semanticHighlight: AST node is vardecl\n");
 		auto const sourceName = _documentPosition.uri.substr(7); // strip "file://"
 		frontend::SourceUnit const& sourceUnit = m_compilerStack->ast(sourceName);
 		output = findAllReferences(varDecl, sourceUnit);
 	}
-	else if (auto const memberAccess = dynamic_cast<MemberAccess const*>(sourceNode); memberAccess != nullptr)
+	else if (auto const memberAccess = dynamic_cast<MemberAccess const*>(sourceNode))
 	{
 		// TODO: find out if the member access is an EnumValue
 		TypePointer const type = memberAccess->expression().annotation().type;
