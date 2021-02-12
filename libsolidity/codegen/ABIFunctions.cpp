@@ -1029,7 +1029,7 @@ string ABIFunctions::abiEncodingFunctionFunctionType(
 )
 {
 	solAssert(_from.kind() == FunctionType::Kind::External, "");
-	solAssert(_from == _to, "");
+	solAssert(_from.isImplicitlyConvertibleTo(_to), "");
 
 	string functionName =
 		"abi_encode_" +
