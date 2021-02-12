@@ -470,7 +470,7 @@ implementation will also be discussed in the `Solidity GitHub repository <https:
 in the form of issues.
 
 In addition to the forum and issue discussions, we regularly host language design discussion calls, in which selected
-topics, issues or feature implementations are debated in detail. The invitation to those calls is shared via the forum. 
+topics, issues or feature implementations are debated in detail. The invitation to those calls is shared via the forum.
 
 We are also sharing feedback surveys and other language design relevant content in the forum.
 
